@@ -1,0 +1,186 @@
+#include <iostream>
+#include <conio.h>
+
+using namespace std;
+
+bool gameOver; // выход из игры
+
+const int WEIGHT = 50; // длинна поля
+const int HEIGHT = 15; // высота поля
+
+int x, y, fruitX, fruitY, score; // координаты змейки, фрукта, счет
+int tailX[100], tailY[100];
+int nTail;
+
+enum WASD {STOP = 0, LEFT, RIGHT, UP, DOWN};
+WASD dir;
+
+void Setup()
+{
+	gameOver = false;
+	score = 0; // счет( начальное значение )
+
+	x = WEIGHT / 2 - 1; // начальные координаты змейки
+	y = HEIGHT / 2 - 1;
+
+	fruitX = rand() % WEIGHT; //начальные координаты фрукта
+	fruitY = rand() % HEIGHT;
+}
+
+void World()
+{
+	for(int i = 0; ; i++)
+		if (i == 10500000)
+		{
+			system("cls"); // очистка консоли при каждом вызове фнкции World()
+			break;
+		}
+
+	for (int i = 0; i < WEIGHT + 1; i++) // верхняя граница
+	{
+		cout << "#";
+	}
+	cout << endl;
+
+	for (int i = 0; i < HEIGHT; i++) // левая и правая границы
+	{
+		for (int j = 0; j < WEIGHT; j++)
+		{
+			if (j == 0 || j == WEIGHT - 1) // вывод боковых границ
+				cout << "#";
+			
+			if (j == x && i == y) // расположение змейки
+				cout << "0";
+			else if (j == fruitX && i == fruitY) // расположение фрукта
+				cout << "F";
+			else
+			{
+				bool print = false; //если выводим хвост, то пробел не нужен
+
+				for (int k = 0; k < nTail; k++)
+				{
+					if (tailX[k] == j && tailY[k] == i) //вывод хвоста
+					{
+						cout << "o";
+						print = true;
+					}
+				}
+				
+				if (!print)
+					cout << ' ';
+			}
+		}
+		cout << endl;
+	}
+
+	for (int i = 0; i < WEIGHT + 1; i++) // нижняя граница
+	{
+		cout << "#";
+	}
+	cout << endl;
+
+	cout << "Score: " << score;
+}
+
+void Input()
+{
+	if (_kbhit())
+	{
+		switch ( _getch() )
+		{
+		case 'a':
+			dir = LEFT;
+			break;
+		case 'd':
+			dir = RIGHT;
+			break;
+		case 'w':
+			dir = UP;
+			break;
+		case 's':
+			dir = DOWN;
+			break;
+		case 'x':
+			gameOver = true;
+			break;
+		}
+	}
+}
+
+void Logic()
+{
+	int prevX = tailX[0];	//реализация хвоста
+	int prevY = tailY[0];
+	int prev2X, prev2Y;
+
+	tailX[0] = x;
+	tailY[0] = y;
+
+	for (int i = 1; i < nTail; i++)
+	{
+		prev2X = tailX[i];
+		prev2Y = tailY[i];
+
+		tailX[i] = prevX;
+		tailY[i] = prevY;
+
+		prevX = prev2X;
+		prevY = prev2Y;
+	}
+
+	for (int i = 1; i < nTail; i++) //съедание хвоста
+	{
+		if (tailX[i] == x && tailY[i] == y)
+			gameOver = true;
+	}
+
+	switch (dir) //управление
+	{
+	case LEFT:
+		x--;
+		break;
+	case RIGHT:
+		x++;
+		break;
+	case UP:
+		y--;
+		break;
+	case DOWN:
+		y++;
+		break;
+	}
+
+	if (x == fruitX && y == fruitY) //поедание фрукта
+	{
+		score += 10;
+		fruitX = rand() % WEIGHT;
+		fruitY = rand() % HEIGHT;
+		nTail++;
+	}
+
+	if (x > WEIGHT - 1 || y > HEIGHT - 1 || y < 0 || x < 0) //выход за границы
+		gameOver = true;
+}
+
+
+
+int main()
+{
+	setlocale(LC_ALL, "rus");
+
+	Setup();
+
+	while (!gameOver)
+	{
+		World();
+		Input();
+		Logic();
+	}
+
+	cout << endl << endl << "GAME OVER" << endl << endl;
+
+	system("pause");
+
+
+	return 0;
+}
