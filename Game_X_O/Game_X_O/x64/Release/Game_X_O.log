@@ -1,0 +1,8 @@
+﻿  stdafx.cpp
+  Game_X_O.cpp
+c:\users\acer\source\repos\game_x_o\game_x_o\game_x_o.cpp(498): warning C4551: в вызове функции отсутствует список аргументов
+c:\users\acer\source\repos\game_x_o\game_x_o\game_x_o.cpp(520): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+  Создание кода
+  All 20 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Создание кода завершено
+  Game_X_O.vcxproj -> C:\Users\ACER\source\repos\Game_X_O\x64\Release\Game_X_O.exe
