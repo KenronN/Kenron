@@ -1,0 +1,578 @@
+// Game_X_O.cpp : Defines the entry point for the console application.
+//
+
+
+#include "stdafx.h"
+#include <iostream>
+#include <cctype>
+#include <conio.h>
+#include <ctime>
+
+using namespace std;
+
+/* 1) Игровое поле
+2) Логика
+3) Взаимодействие
+4) Сохранение текущей сетки
+5) функция победы (перебор возможных выигрышных комбинаций)
+6) Очень глупый, но все же ИИ)
+*/
+
+bool gameOver = true; //индикатор проигрыша
+bool x_or_o = true; //false - O (нолик), true - X(крестик)
+bool step = false; // игра против компа true - играет AI, false - 2 игрока
+
+//int field_id = 0;
+
+// размерность сетки
+const int WEIGT = 13;
+const int HIGHT = 11;
+const int ROWS = 3, COLS = 3;
+
+//такое обозначение необходимо для упрощения проверки на if - else
+char FIELD[ROWS][COLS] = {'3','3','4','2','2','3','1','1','2'}; 
+
+/* индексация кнопок на клавиатуре
+___	a b c
+|
+a   7 8 9
+b   4 5 6
+c   1 2 3
+*/
+enum O_X { ca = 1, cb, cc, ba, bb, bc, aa, ab, ac };
+O_X dir;
+
+
+
+
+
+void Map() //Визуализация карты
+{
+	system("cls");
+
+	for (register int i = 0; i < WEIGT; i++) //Вывод верхней границы сетки
+	{
+		cout << "#";
+	}
+
+	cout << endl;
+
+
+
+	for (register int i = 0; i < HIGHT; i++) // вывод сетки
+	{
+		if (i == 3 || i == 7)
+			for (register int i = 0; i < WEIGT; i++) // вывод горизонтальных разделений сетки карты
+			{
+				cout << "#";
+			}
+		else
+			for (int j = 0; j < WEIGT + 1; j++) // вертикальные разделения сетки карты
+			{
+				if (j == 0 || j == 4 || j == 8 || j == 12)
+					cout << "#";
+				// где-то здесь должен быть вывод крестиков-ноликов	if()
+				//клетка 0-0
+				else if (i == 0 && FIELD[0][0] == 'x' && j == 1 || i == 0 && FIELD[0][0] == 'x' && j == 3)
+					cout << "x";
+				else if (i == 1 && FIELD[0][0] == 'x' && j == 2)
+					cout << "x";
+				else if (i == 2 && FIELD[0][0] == 'x' && j == 1 || i == 2 && FIELD[0][0] == 'x' && j == 3)
+					cout << "x";
+
+				else if (i == 0 && FIELD[0][0] == 'o' && j == 2)
+					cout << "o";
+				else if (i == 1 && FIELD[0][0] == 'o' && j == 1 || i == 1 && FIELD[0][0] == 'o' && j == 3)
+					cout << "o";
+				else if (i == 2 && FIELD[0][0] == 'o' && j == 2)
+					cout << "o";
+				////////
+				//клетка 0-1
+				else if (i == 0 && FIELD[0][1] == 'x' && j == 5 || i == 0 && FIELD[0][1] == 'x' && j == 7)
+					cout << "x";
+				else if (i == 1 && FIELD[0][1] == 'x' && j == 6)
+					cout << "x";
+				else if (i == 2 && FIELD[0][1] == 'x' && j == 5 || i == 2 && FIELD[0][1] == 'x' && j == 7)
+					cout << "x";
+
+				else if (i == 0 && FIELD[0][1] == 'o' && j == 6)
+					cout << "o";
+				else if (i == 1 && FIELD[0][1] == 'o' && j == 5 || i == 1 && FIELD[0][1] == 'o' && j == 7)
+					cout << "o";
+				else if (i == 2 && FIELD[0][1] == 'o' && j == 6)
+					cout << "o";
+				//////
+				//клетка 0-2 и так далее продолжить(тупо,много кода, я - дурак, но еще не знаю как сделать по-другому)
+				else if (i == 0 && FIELD[0][2] == 'x' && j == 9 || i == 0 && FIELD[0][2] == 'x' && j == 11)
+					cout << "x";
+				else if (i == 1 && FIELD[0][2] == 'x' && j == 10)
+					cout << "x";
+				else if (i == 2 && FIELD[0][2] == 'x' && j == 9 || i == 2 && FIELD[0][2] == 'x' && j == 11)
+					cout << "x";
+
+				else if (i == 0 && FIELD[0][2] == 'o' && j == 10)
+					cout << "o";
+				else if (i == 1 && FIELD[0][2] == 'o' && j == 9 || i == 1 && FIELD[0][2] == 'o' && j == 11)
+					cout << "o";
+				else if (i == 2 && FIELD[0][2] == 'o' && j == 10)
+					cout << "o";
+				//клетка 1-0
+				else if (i == 4 && FIELD[1][0] == 'x' && j == 1 || i == 4 && FIELD[1][0] == 'x' && j == 3)
+					cout << "x";
+				else if (i == 5 && FIELD[1][0] == 'x' && j == 2)
+					cout << "x";
+				else if (i == 6 && FIELD[1][0] == 'x' && j == 1 || i == 6 && FIELD[1][0] == 'x' && j == 3)
+					cout << "x";
+
+				else if (i == 4 && FIELD[1][0] == 'o' && j == 2)
+					cout << "o";
+				else if (i == 5 && FIELD[1][0] == 'o' && j == 1 || i == 5 && FIELD[1][0] == 'o' && j == 3)
+					cout << "o";
+				else if (i == 6 && FIELD[1][0] == 'o' && j == 2)
+					cout << "o";
+				//клетка 1-1
+				else if (i == 4 && FIELD[1][1] == 'x' && j == 5 || i == 4 && FIELD[1][1] == 'x' && j == 7)
+					cout << "x";
+				else if (i == 5 && FIELD[1][1] == 'x' && j == 6)
+					cout << "x";
+				else if (i == 6 && FIELD[1][1] == 'x' && j == 5 || i == 6 && FIELD[1][1] == 'x' && j == 7)
+					cout << "x";
+
+				else if (i == 4 && FIELD[1][1] == 'o' && j == 6)
+					cout << "o";
+				else if (i == 5 && FIELD[1][1] == 'o' && j == 5 || i == 5 && FIELD[1][1] == 'o' && j == 7)
+					cout << "o";
+				else if (i == 6 && FIELD[1][1] == 'o' && j == 6)
+					cout << "o";
+				//клетка 1-2
+				else if (i == 4 && FIELD[1][2] == 'x' && j == 9 || i == 4 && FIELD[1][2] == 'x' && j == 11)
+					cout << "x";
+				else if (i == 5 && FIELD[1][2] == 'x' && j == 10)
+					cout << "x";
+				else if (i == 6 && FIELD[1][2] == 'x' && j == 9 || i == 6 && FIELD[1][2] == 'x' && j == 11)
+					cout << "x";
+
+				else if (i == 4 && FIELD[1][2] == 'o' && j == 10)
+					cout << "o";
+				else if (i == 5 && FIELD[1][2] == 'o' && j == 9 || i == 5 && FIELD[1][2] == 'o' && j == 11)
+					cout << "o";
+				else if (i == 6 && FIELD[1][2] == 'o' && j == 10)
+					cout << "o";
+				//клетка 2-0
+				else if (i == 8 && FIELD[2][0] == 'x' && j == 1|| i == 8 && FIELD[2][0] == 'x' && j == 3)
+					cout << "x";
+				else if (i == 9 && FIELD[2][0] == 'x' && j == 2)
+					cout << "x";
+				else if (i == 10 && FIELD[2][0] == 'x' && j == 1 || i == 10 && FIELD[2][0] == 'x' && j == 3)
+					cout << "x";
+
+				else if (i == 8 && FIELD[2][0] == 'o' && j == 2)
+					cout << "o";
+				else if (i == 9 && FIELD[2][0] == 'o' && j == 1 || i == 9 && FIELD[2][0] == 'o' && j == 3)
+					cout << "o";
+				else if (i == 10 && FIELD[2][0] == 'o' && j == 2)
+					cout << "o";
+					//клетка 2-1
+				else if (i == 8 && FIELD[2][1] == 'x' && j == 5 || i == 8 && FIELD[2][1] == 'x' && j == 7)
+					cout << "x";
+				else if (i == 9 && FIELD[2][1] == 'x' && j == 6)
+					cout << "x";
+				else if (i == 10 && FIELD[2][1] == 'x' && j == 5 || i == 10 && FIELD[2][1] == 'x' && j == 7)
+					cout << "x";
+
+				else if (i == 8 && FIELD[2][1] == 'o' && j == 6)
+					cout << "o";
+				else if (i == 9 && FIELD[2][1] == 'o' && j == 5 || i == 9 && FIELD[2][1] == 'o' && j == 7)
+					cout << "o";
+				else if (i == 10 && FIELD[2][1] == 'o' && j == 6)
+					cout << "o";
+					//клетка 2-2
+				else if (i == 8 && FIELD[2][2] == 'x' && j == 9 || i == 8 && FIELD[2][2] == 'x' && j == 11)
+					cout << "x";
+				else if (i == 9 && FIELD[2][2] == 'x' && j == 10)
+					cout << "x";
+				else if (i == 10 && FIELD[2][2] == 'x' && j == 9 || i == 10 && FIELD[2][2] == 'x' && j == 11)
+					cout << "x";
+
+				else if (i == 8 && FIELD[2][2] == 'o' && j == 10)
+					cout << "o";
+				else if (i == 9 && FIELD[2][2] == 'o' && j == 9 || i == 9 && FIELD[2][2] == 'o' && j == 11)
+					cout << "o";
+				else if (i == 10 && FIELD[2][2] == 'o' && j == 10)
+					cout << "o";
+
+				else cout << " ";
+			}
+		cout << endl;
+	}
+
+
+
+	for (register int i = 0; i < WEIGT; i++) // нижняя граница сетки
+	{
+		cout << "#";
+	}
+
+	cout << endl;
+}
+
+void Logic() // Логика
+{
+	switch (x_or_o)
+	{
+	case false:
+	{
+		switch (dir)
+		{
+		case ca: 
+		{
+			if (FIELD[2][0] == 'o' || FIELD[2][0] == 'x') break;
+			else
+			{
+				FIELD[2][0] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case cb: 
+		{ 
+			if (FIELD[2][1] == 'o' || FIELD[2][1] == 'x') break;
+			else
+			{
+				FIELD[2][1] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case cc: 
+		{
+			if (FIELD[2][2] == 'o' || FIELD[2][2] == 'x') break;
+			else
+			{
+				FIELD[2][2] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case ba:
+		{
+			if (FIELD[1][0] == 'o' || FIELD[1][0] == 'x') break;
+			else
+			{
+				FIELD[1][0] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case bb: 
+		{
+			if (FIELD[1][1] == 'o' || FIELD[1][1] == 'x') break;
+			else
+			{
+				FIELD[1][1] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case bc: 
+		{
+			if (FIELD[1][2] == 'o' || FIELD[1][2] == 'x') break;
+			else
+			{
+				FIELD[1][2] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case aa: 
+		{
+			if (FIELD[0][0] == 'o' || FIELD[0][0] == 'x') break;
+			else
+			{
+				FIELD[0][0] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case ab: 
+		{
+			if (FIELD[0][1] == 'o' || FIELD[0][1] == 'x') break;
+			else
+			{
+				FIELD[0][1] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		case ac: 
+		{
+			if (FIELD[0][2] == 'o' || FIELD[0][2] == 'x') break;
+			else
+			{
+				FIELD[0][2] = 'o';
+				x_or_o = true;
+			}
+		} break;
+		}
+	} break;
+
+	case true:
+	{
+		switch (dir)
+		{
+		case ca: 
+		{ 
+			if (FIELD[2][0] == 'o' || FIELD[2][0] == 'x') break;
+			else
+			{
+				FIELD[2][0] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case cb: 
+		{
+			if (FIELD[2][1] == 'o' || FIELD[2][1] == 'x') break;
+			else
+			{
+				FIELD[2][1] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case cc: 
+		{ 
+			if (FIELD[2][2] == 'o' || FIELD[2][2] == 'x') break;
+			else
+			{
+				FIELD[2][2] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case ba: 
+		{ 
+			if (FIELD[1][0] == 'o' || FIELD[1][0] == 'x') break;
+			else
+			{
+				FIELD[1][0] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case bb: 
+		{
+			if (FIELD[1][1] == 'o' || FIELD[1][1] == 'x') break;
+			else
+			{
+				FIELD[1][1] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case bc: 
+		{ 
+			if (FIELD[1][2] == 'o' || FIELD[1][2] == 'x') break;
+			else
+			{
+				FIELD[1][2] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case aa: 
+		{ 
+			if (FIELD[0][0] == 'o' || FIELD[0][0] == 'x') break;
+			else
+			{
+				FIELD[0][0] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case ab: 
+		{ 
+			if (FIELD[0][1] == 'o' || FIELD[0][1] == 'x') break;
+			else
+			{
+				FIELD[0][1] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		case ac: 
+		{
+			if (FIELD[0][2] == 'o' || FIELD[0][2] == 'x') break;
+			else
+			{
+				FIELD[0][2] = 'x';
+				x_or_o = false;
+			}
+		} break;
+		}
+	} break;
+	}
+}
+
+void Click() // Управление сеткой
+{
+	if (_kbhit())
+	{
+		switch (_getch())
+		{
+		case '7': dir = aa; break;
+		case '8': dir = ab; break;
+		case '9': dir = ac; break;
+
+		case '4': dir = ba; break;
+		case '5': dir = bb; break;
+		case '6': dir = bc; break;
+
+		case '1': dir = ca; break;
+		case '2': dir = cb; break;
+		case '3': dir = cc; break;
+
+		case '0': gameOver = true; break;
+		}
+	}
+}
+
+char WictoryOrDraw()
+{
+	for (register int i = 0; i < ROWS; i++)
+		if (FIELD[i][0] == FIELD[i][1] && FIELD[i][1] == FIELD[i][2]) return FIELD[i][0];
+	
+	for (register int i = 0; i < COLS; i++)
+		if (FIELD[0][i] == FIELD[1][i] && FIELD[1][i] == FIELD[2][i]) return FIELD[0][i];
+
+	if (FIELD[0][0] == FIELD[1][1] && FIELD[1][1] == FIELD[2][2]) return FIELD[0][0];
+
+	if (FIELD[2][0] == FIELD[1][1] && FIELD[1][1] == FIELD[0][2]) return FIELD[2][0];
+	else return 0;
+}
+
+inline void strok()
+{
+	cout << endl;
+	if (!x_or_o) cout << "Ходят нолики" << endl << endl;
+	else cout << "Ходят крестики" << endl << endl;
+}
+
+
+bool CanMovie()
+{
+	bool p = false;
+
+	for (int i = 0; i < ROWS; i++)
+	{
+		for (int j = 0; j < COLS; j++)
+		{
+			if (FIELD[i][j] == '1' || FIELD[i][j] == '2' || FIELD[i][j] == '3' || FIELD[i][j] == '4')
+			{
+				p = true;
+				break;
+			}
+		}
+		if (p == true)
+			break;
+	}
+
+	return p;
+}
+
+void Menu()
+{
+	int choise;
+
+	cout << "1) Начать игру (2 игрока)" << endl << "2) Выйти из игры" << endl << "3) Играть против бота ( легкий уровень )" << endl;
+	cin >> choise;
+	switch (choise)
+	{
+	case 1: gameOver = false; break;
+	case 2: gameOver = true; break;
+	case 3: gameOver = false; step = true; break;
+	default: cout << "Выберите действие" << endl; break;
+	}	
+}
+
+void AI_easy()
+{
+	switch (x_or_o)
+	{
+	case true: break;
+	case false:
+	{
+		int r = rand() % 3;
+		int c = rand() % 3;
+
+		for ( ; ; )
+		{
+			if (CanMovie && FIELD[r][c] != 'x' && FIELD[r][c] != 'o')
+			{
+				FIELD[r][c] = 'o'; //************
+				x_or_o = true;
+				break;
+			}
+			else
+			{
+				r = rand() % 3;
+				c = rand() % 3;
+			}
+		}
+	} break;
+	}
+}
+
+
+
+
+void main()
+{
+	setlocale(LC_ALL, "rus");
+	srand(time(NULL));
+
+	do
+	{
+		if (gameOver) 
+			Menu();
+
+		Map();
+
+		strok();
+		//system("pause");
+		Click();
+
+		if(step)
+			AI_easy();
+
+		Logic();
+		
+		char temp = WictoryOrDraw();
+		if (temp == 'x')
+		{
+			Map();
+			cout << endl << endl << "--------------------------------" << endl;
+			cout << "ПОБЕДИЛИ КРЕСТИКИ" << endl;
+			cout << "--------------------------------" << endl;
+			gameOver = true;
+			step = false;
+		}
+		else if (temp == 'o')
+		{
+			Map();
+			cout << endl << endl << "--------------------------------" << endl;
+			cout << "ПОБЕДИЛИ НОЛИКИ" << endl;
+			cout << "--------------------------------" << endl;
+			gameOver = true;
+			step = false;
+		}
+		else if (temp != 'x' && temp != 'o' && !CanMovie())
+		{
+			Map();
+			cout << endl << endl << "--------------------------------" << endl;
+			cout << "НИЧЬЯ" << endl;
+			cout << "--------------------------------" << endl;
+			gameOver = true;
+			step = false;
+		}
+		
+
+		// Тестирование работы
+		//cout << dir;
+		//cout << endl << endl;
+
+		//for (int i = 0; i < 3; i++)
+		//{
+		//	for (int j = 0; j < 3; j++)
+		//		cout << FIELD[i][j] << " ";
+		//	cout << endl;
+		//}
+
+	} while (!gameOver);
+
+	system("pause");
+}
